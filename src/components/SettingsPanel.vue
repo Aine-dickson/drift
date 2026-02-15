@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="hidden lg:flex flex-col gap-4 rounded-2xl border border-white/10
+    class="hidden lg:flex overflow-y-auto thin-scroll flex-col gap-4 rounded-2xl border border-white/10
            bg-white/5 p-4 shadow-xl backdrop-blur md:w-64 lg:w-72"
   >
     <!-- Header -->

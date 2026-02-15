@@ -2,73 +2,77 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 export const useUiStore = defineStore("ui", () => {
-    const searchTerm = ref("");
-    const tagFilter = ref<string | null>(null);
-    const isEditing = ref(false);
-    const focusMode = ref(false);
-    const editingContent = ref(false);
-    const tagInput = ref("");
-    const isSettingsOpen = ref(false);
-    const isInitialSetup = ref(false);
+  // search & filters
+  const searchTerm = ref("");
+  const tagFilter = ref<string | null>(null);
+  const tagInput = ref("");
 
-    const setSearchTerm = (value: string) => {
-        searchTerm.value = value;
-    }
+  // editing state
+  const isEditing = ref(false);
+  const editingContent = ref(false);
 
-    const setTagFilter = (value: string | null) => {
-        tagFilter.value = value;
-    }
+  // UI modes
+  const focusMode = ref(false);
+  const isSettingsOpen = ref(false);
+  const isInitialSetup = ref(false);
 
-    const startEditing = () => {
-        isEditing.value = true;
-    }
+  // --- actions ---
+  const setSearchTerm = (value: string) => {
+    searchTerm.value = value;
+  };
 
-    const closeEditing = () => {
-        isEditing.value = false;
-    }
+  const setTagFilter = (value: string | null) => {
+    tagFilter.value = value;
+  };
 
-    const stopEditing = () => {
-        isEditing.value = false;
-    }
+  const setTagInput = (value: string) => {
+    tagInput.value = value;
+  };
 
-    const setEditingContent = (value: boolean) => {
-        editingContent.value = value;
-    }
+  const startEditing = () => {
+    isEditing.value = true;
+  };
 
-    const toggleFocusMode = () => {
-        focusMode.value = !focusMode.value;
-    }
+  const stopEditing = () => {
+    isEditing.value = false;
+  };
 
-    const setTagInput = (value: string) => {
-        tagInput.value = value;
-    }
+  const setEditingContent = (value: boolean) => {
+    editingContent.value = value;
+  };
 
-    const openSettings = () => {
-        isSettingsOpen.value = true;
-    }
+  const toggleFocusMode = () => {
+    focusMode.value = !focusMode.value;
+  };
 
-    const closeSettings = () => {
-        isSettingsOpen.value = false;
-    }
+  const openSettings = () => {
+    isSettingsOpen.value = true;
+  };
 
-        return {
-        searchTerm,
-        setSearchTerm,
-        tagFilter,
-        setTagFilter,
-        isEditing,
-        startEditing,
-        closeEditing,
-        stopEditing,
-        editingContent,
-        setEditingContent,
-        focusMode,
-        toggleFocusMode,
-        tagInput,
-        setTagInput,
-        isSettingsOpen,
-        openSettings,
-        closeSettings,
-        isInitialSetup
-    }
+  const closeSettings = () => {
+    isSettingsOpen.value = false;
+  };
+
+  return {
+    // state
+    searchTerm,
+    tagFilter,
+    tagInput,
+    isEditing,
+    editingContent,
+    focusMode,
+    isSettingsOpen,
+    isInitialSetup,
+
+    // actions
+    setSearchTerm,
+    setTagFilter,
+    setTagInput,
+    startEditing,
+    stopEditing,
+    setEditingContent,
+    toggleFocusMode,
+    openSettings,
+    closeSettings,
+  };
 });

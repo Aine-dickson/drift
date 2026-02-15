@@ -1,6 +1,6 @@
 <template>
-	<div class="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-		<div class="mx-auto flex h-screen max-w-6xl xl:max-w-full flex-col md:flex-row gap-4 md:gap-6 px-0 md:px-6 py-0 md:py-6">
+	<div class="min-h-screen overflow-hidden bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+		<div class="mx-auto max-h-dvh h-dvh max-w-6xl xl:max-w-full grid grid-cols-1 md:grid-cols-[min-content_28rem_min-content] grid-rows-1 justify-center gap-6 px-0 md:py-2">
 			<SidebarPanel />
 			<EditorPanel />
 			<SettingsPanel :ensureAutostart="ensureAutostart" :stopAlarmSound="stopAlarmSound" />
