@@ -36,7 +36,7 @@ const sanitized = computed(() => {
   <div
     class="
       prose prose-invert max-w-none
-      break-words overflow-wrap-anywhere
+      wrap-break-word overflow-wrap-anywhere
     "
     v-html="sanitized"
   />

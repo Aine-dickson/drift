@@ -1,6 +1,6 @@
 <template>
     <main
-        class="flex flex-1 flex-col w-full rounded-none border border-white/10 bg-white/5 p-4 backdrop-blur md:rounded-2xl md:p-6"
+        class="flex min-w-0 flex-1 flex-col w-full rounded-none border border-white/10 bg-white/5 p-4 backdrop-blur md:rounded-2xl md:p-6"
         :class="{ 'hidden md:flex': !uiStore.isEditing }">
         <div v-if="activeNote" class="mb-3 w-full flex items-center gap-2 text-xs text-slate-400 md:hidden">
             <button
@@ -26,9 +26,9 @@
                 </button>
 
                 <div class="ml-auto flex gap-2 relative">
-                    
+                    <!-- Pin button -->
                     <svg @click="notesStore.togglePin(activeNote.id)" xmlns="http://www.w3.org/2000/svg"
-                        class="w-6 h-6 cursor-pointer"
+                        class="w-5 h-5 cursor-pointer"
                         :class="activeNote.pinned ? 'text-emerald-400' : 'text-slate-400'" height="24px"
                         viewBox="0 -960 960 960" width="24px" fill="currentColor">
                         <path
@@ -37,14 +37,14 @@
 
                     <!-- Delete note btn -->
                     <svg @click="deleteNote(activeNote.id)"
-                        class="w-6 h-6 cursor-pointer text-red-500 dark:text-red-400" aria-hidden="true"
+                        class="w-5 h-5 cursor-pointer text-red-500 dark:text-red-400" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
                     </svg>
 
                     <!-- Note Info button -->
-                    <svg @click="toggleInfo('open')" class="w-6 h-6 cursor-pointer text-gray-800 dark:text-white"
+                    <svg @click="toggleInfo('open')" class="w-5 h-5 cursor-pointer text-gray-800 dark:text-white"
                         aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -71,23 +71,23 @@
                             <div class="pt-4">
                                 <div class="flex justify-between">
                                     <p class="text-body mb-2">Version:</p>
-                                    <span>{{ activeNote.version }}</span>
+                                    <span class="text-gray-500">{{ activeNote.version }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <p class="text-body mb-2">Sync:</p>
-                                    <span>{{ activeNote.version ? 'Local' : 'Complete' }}</span>
+                                    <span class="text-gray-500">{{ activeNote.version ? 'Local' : 'Complete' }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <p class="text-body mb-2">Created:</p>
-                                    <span>{{ formatDate(activeNote.createdAt) }}</span>
+                                    <span class="text-gray-500">{{ formatDate(activeNote.createdAt) }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <p class="text-body mb-2">Updated:</p>
-                                    <span>{{ formatDate(activeNote.updatedAt) }}</span>
+                                    <span class="text-gray-500">{{ formatDate(activeNote.updatedAt) }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <p class="">Alarms:</p>
-                                    <span>{{ activeNote.reminders?.length }}</span>
+                                    <span class="text-gray-500">{{ activeNote.reminders?.length }}</span>
                                 </div>
                                 
                             </div>
@@ -149,10 +149,10 @@
                 </div>
             </div>
 
-            <div class="mt-4 flex-1 overflow-y-hidden">
+            <div class="mt-4 flex-1 w-full min-w-0 overflow-hidden">
 
                 <div v-if="uiStore.editingContent"
-                    class="h-full thin-scroll w-full rounded-2xl border border-white/10 bg-slate-950/40 overflow-hidden text-sm leading-6 text-slate-100 shadow-inner focus-within:border-emerald-400">
+                    class="h-full w-full min-w-0 thin-scroll rounded-2xl border border-white/10 bg-slate-950/40 overflow-hidden text-sm leading-6 text-slate-100 shadow-inner focus-within:border-emerald-400">
                     <editor v-if="activeNote" v-model="activeNote.content" />
 
                 </div>

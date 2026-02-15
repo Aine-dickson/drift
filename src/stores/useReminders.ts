@@ -3,74 +3,111 @@ import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useNotesStore, type Note, type Reminder } from "./useNotes";
 
-type ReminderForm = { date: string; time: string; repeat: Reminder["repeat"] | "none" };
+/* ───────────────── helpers ───────────────── */
 
-const combineDateTimeToIso = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
-const clampFuture = (iso: string) => {
-  const atMs = new Date(iso).getTime();
-  const minMs = Date.now() + 60 * 1000;
-  return new Date(Math.max(atMs, minMs)).toISOString();
+type ReminderForm = {
+  date: string; // YYYY-MM-DD (local)
+  time: string; // HH:mm (local)
+  repeat: Reminder["repeat"] | "none";
 };
 
-const toPayloads = (note: Note) => {
-  const now = Date.now();
-  const reminders = note.reminders ?? [];
-  return reminders
-    .filter((rem) => !rem.done && new Date(rem.at).getTime() > now)
-    .map((rem) => ({
-      id: rem.id,
-      note_id: note.id,
-      at: rem.at,
-      title: note.title || "Drift",
-      body: (note.content || "").slice(0, 120),
-    }));
+const normalizeMinute = (d: Date) => {
+  d.setSeconds(0, 0);
+  return d;
 };
+
+const toLocalDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-CA");
+
+const toLocalTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const combineLocalToIso = (date: string, time: string) => {
+  const [h, m] = time.split(":").map(Number);
+  const d = new Date(date);
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+};
+
+/* ───────────────── store ───────────────── */
 
 export const useRemindersStore = defineStore("reminders", () => {
   const notesStore = useNotesStore();
 
   const isSheetOpen = ref(false);
   const selectedReminderId = ref<string | "new" | null>(null);
-  const reminderForm = ref<ReminderForm>({ date: "", time: "", repeat: "none" });
-  const notificationReady = ref(false);
-
-  const dateMin = computed(() => new Date().toISOString().slice(0, 10));
-  const timeMin = computed(() => {
-    if (reminderForm.value.date !== dateMin.value) return undefined;
-    return new Date(Date.now() + 60 * 1000).toISOString().slice(11, 16);
+  const reminderForm = ref<ReminderForm>({
+    date: "",
+    time: "",
+    repeat: "none",
   });
 
-  const syncFromActive = (reminderId?: string | "new") => {
-    const note = notesStore.getActiveNote();
-    const baseDate = new Date(Date.now() + 60 * 60 * 1000);
-    const defaults = { date: baseDate.toISOString().slice(0, 10), time: baseDate.toISOString().slice(11, 16), repeat: "none" as const };
+  const notificationReady = ref(false);
 
+  /* ─────────────── time guards ─────────────── */
+
+  const dateMin = computed(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+
+  const timeMin = computed(() => {
+    if (reminderForm.value.date !== dateMin.value) return undefined;
+    return toLocalTime(
+      normalizeMinute(new Date(Date.now() + 60_000)).toISOString(),
+    );
+  });
+
+  /* ─────────────── derived helpers ─────────────── */
+
+  const getDefaultForm = (): ReminderForm => {
+    const base = normalizeMinute(new Date(Date.now() + 60 * 60_000));
+    return {
+      date: toLocalDate(base.toISOString()),
+      time: toLocalTime(base.toISOString()),
+      repeat: "none",
+    };
+  };
+
+  const hydrateFromReminder = (r: Reminder): ReminderForm => ({
+    date: toLocalDate(r.at),
+    time: toLocalTime(r.at),
+    repeat: r.repeat ?? "none",
+  });
+
+  /* ─────────────── sheet control ─────────────── */
+
+  const syncFromActive = (id?: string | "new") => {
+    const note = notesStore.getActiveNote();
     if (!note) {
       selectedReminderId.value = "new";
-      reminderForm.value = defaults;
+      reminderForm.value = getDefaultForm();
       return;
     }
 
     const reminders = note.reminders ?? [];
-    if (reminderId === "new" || (!reminderId && reminders.length === 0)) {
+
+    if (id === "new" || reminders.length === 0) {
       selectedReminderId.value = "new";
-      reminderForm.value = defaults;
+      reminderForm.value = getDefaultForm();
       return;
     }
 
-    const targetId = reminderId && reminderId !== "new" ? reminderId : reminders.find((r) => !r.done)?.id ?? reminders[0]?.id;
-    const target = reminders.find((r) => r.id === targetId);
-    const base = target ? new Date(target.at) : baseDate;
-    reminderForm.value = {
-      date: base.toISOString().slice(0, 10),
-      time: base.toISOString().slice(11, 16),
-      repeat: target?.repeat ?? "none",
-    };
+    const target =
+      reminders.find(r => r.id === id) ??
+      reminders.find(r => !r.done) ??
+      reminders[0];
+
     selectedReminderId.value = target?.id ?? "new";
+    reminderForm.value = target
+      ? hydrateFromReminder(target)
+      : getDefaultForm();
   };
 
-  const openSheet = (reminderId?: string | "new") => {
-    syncFromActive(reminderId);
+  const openSheet = (id?: string | "new") => {
+    syncFromActive(id);
     isSheetOpen.value = true;
   };
 
@@ -78,94 +115,119 @@ export const useRemindersStore = defineStore("reminders", () => {
     isSheetOpen.value = false;
   };
 
-  const patchReminderForm = (patch: Partial<ReminderForm>) => {
-    reminderForm.value = { ...reminderForm.value, ...patch };
-  };
-
-  const setSelectedReminderId = (value: string | "new" | null) => {
-    selectedReminderId.value = value;
-  };
+  /* ─────────────── validation ─────────────── */
 
   const enforceReminderMin = () => {
-    if (reminderForm.value.date === dateMin.value && timeMin.value && reminderForm.value.time < timeMin.value) {
-      reminderForm.value = { ...reminderForm.value, time: timeMin.value };
+    if (
+      reminderForm.value.date === dateMin.value &&
+      timeMin.value &&
+      reminderForm.value.time < timeMin.value
+    ) {
+      reminderForm.value.time = timeMin.value;
     }
   };
 
-  const setQuickReminder = (offsetDays: number) => {
-    const base = new Date();
-    base.setDate(base.getDate() + offsetDays);
-    const date = base.toISOString().slice(0, 10);
-    const time = reminderForm.value.time || base.toISOString().slice(11, 16);
-    patchReminderForm({ date, time });
-    enforceReminderMin();
-  };
+  /* ─────────────── scheduling ─────────────── */
 
-  const scheduleAll = async () => {
+  const scheduleReminder = async (note: Note, reminder: Reminder) => {
     if (!notificationReady.value) return;
-    const payloads = notesStore.notes
-      .filter((note) => !note.deletedAt)
-      .flatMap((note) => toPayloads(note));
-    await invoke("schedule_reminders", { reminders: payloads });
+    if (reminder.done) return;
+
+    await invoke("schedule_reminders", {
+      reminders: [
+        {
+          id: reminder.id,
+          note_id: note.id,
+          at: reminder.at,
+          title: note.title || "Drift",
+          body: (note.content || "").slice(0, 120),
+        },
+      ],
+    });
   };
 
-  const cancelIds = async (ids: string[]) => {
-    await invoke("cancel_reminders", { ids });
+  const cancelReminder = async (id: string) => {
+    await invoke("cancel_reminders", { ids: [id] });
   };
+
+  /* ─────────────── mutations ─────────────── */
 
   const saveReminder = async () => {
+    const note = notesStore.getActiveNote();
+    if (!note) return;
+
     const { date, time, repeat } = reminderForm.value;
     if (!date || !time) return;
-    let at = combineDateTimeToIso(date, time);
-    at = clampFuture(at);
-    reminderForm.value = { date: at.slice(0, 10), time: at.slice(11, 16), repeat };
-    enforceReminderMin();
 
-    notesStore.updateActive((note) => {
-      note.reminders = note.reminders ?? [];
+    const at = combineLocalToIso(date, time);
+
+    let saved: Reminder;
+
+    notesStore.updateActive(n => {
+      n.reminders = n.reminders ?? [];
+
       if (selectedReminderId.value && selectedReminderId.value !== "new") {
-        note.reminders = note.reminders.map((reminder) =>
-          reminder.id === selectedReminderId.value
-            ? { ...reminder, at, repeat: repeat === "none" ? undefined : repeat, done: false }
-            : reminder,
+        n.reminders = n.reminders.map(r =>
+          r.id === selectedReminderId.value
+            ? (saved = {
+                ...r,
+                at,
+                repeat: repeat === "none" ? undefined : repeat,
+                done: false,
+              })
+            : r,
         );
       } else {
-        const newReminder = { id: crypto.randomUUID(), at, repeat: repeat === "none" ? undefined : repeat, done: false };
-        note.reminders.push(newReminder);
-        selectedReminderId.value = newReminder.id;
+        saved = {
+          id: crypto.randomUUID(),
+          at,
+          repeat: repeat === "none" ? undefined : repeat,
+          done: false,
+        };
+        n.reminders.push(saved);
+        selectedReminderId.value = saved.id;
       }
     });
-    await scheduleAll();
+
+    await scheduleReminder(note, saved!);
     closeSheet();
   };
 
   const removeReminder = async () => {
     if (!selectedReminderId.value || selectedReminderId.value === "new") return;
-    notesStore.updateActive((note) => {
-      note.reminders = (note.reminders ?? []).filter((reminder) => reminder.id !== selectedReminderId.value);
+
+    const id = selectedReminderId.value;
+
+    notesStore.updateActive(n => {
+      n.reminders = (n.reminders ?? []).filter(r => r.id !== id);
     });
-    await cancelIds([selectedReminderId.value]);
+
+    await cancelReminder(id);
     selectedReminderId.value = null;
     closeSheet();
   };
 
-  const toggleReminderDone = async () => {
+  /* ✔ Mark done = delete + cancel */
+  const markDone = async () => {
     if (!selectedReminderId.value || selectedReminderId.value === "new") return;
-    notesStore.updateActive((note) => {
-      const reminders = note.reminders ?? [];
-      const target = reminders.find((r) => r.id === selectedReminderId.value);
-      if (!target) return;
-      target.done = !target.done;
+
+    const id = selectedReminderId.value;
+
+    notesStore.updateActive(n => {
+      n.reminders = (n.reminders ?? []).filter(r => r.id !== id);
     });
-    await scheduleAll();
+
+    await cancelReminder(id);
+    selectedReminderId.value = null;
   };
+
+  /* ─────────────── permissions ─────────────── */
 
   const requestPermission = async () => {
     try {
       await invoke("request_notification_permission");
       notificationReady.value = true;
-      await scheduleAll();
-    } catch (_) {
+    } catch {
       notificationReady.value = false;
     }
   };
@@ -175,22 +237,17 @@ export const useRemindersStore = defineStore("reminders", () => {
     isSheetOpen,
     selectedReminderId,
     reminderForm,
-    notificationReady,
     dateMin,
     timeMin,
+
     // actions
     openSheet,
     closeSheet,
     syncFromActive,
-    patchReminderForm,
-    setSelectedReminderId,
     enforceReminderMin,
-    setQuickReminder,
-    scheduleAll,
-    cancelIds,
     saveReminder,
     removeReminder,
-    toggleReminderDone,
+    markDone,
     requestPermission,
   };
 });

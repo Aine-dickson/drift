@@ -75,8 +75,7 @@
                 @click="selectNote(note.id)">
                 <div class="flex items-center justify-between gap-2">
                     <p class="text-sm font-semibold">{{ note.title || 'Untitled' }}</p>
-                    <svg v-if="note.pinned" @click="notesStore.togglePin(note.id)" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 cursor-pointer" :class="note.pinned ? 'text-emerald-400' : 'text-slate-400'" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" ><path d="m640-480 80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280Zm-286 80h252l-46-46v-314H400v314l-46 46Zm126 0Z"/></svg>  
-
+                    <svg v-if="note.pinned" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" :class="note.pinned ? 'text-emerald-400' : 'text-slate-400'" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" ><path d="m640-480 80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280Zm-286 80h252l-46-46v-314H400v314l-46 46Zm126 0Z"/></svg>  
                 </div>
                 <p class="mt-1 line-clamp-2 text-xs text-slate-400">{{ preview(note) }}</p>
                 <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
@@ -153,14 +152,12 @@ const preview = (note: any) => {
 
 const selectNote = (id: string) => {
     notesStore.select(id);
-    uiStore.startEditing();
     const next = notesStore.notes.find((note) => note.id === id);
     uiStore.setEditingContent(next ? next.content.trim().length === 0 : true);
 };
 
 const createNote = () => {
-    const note = notesStore.createNote();
-    uiStore.startEditing();
+    notesStore.createNote();
     uiStore.setEditingContent(true);
 };
 </script>
