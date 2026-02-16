@@ -31,7 +31,7 @@
     
             <button
                 class="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-px hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-emerald-400"
-                @click="createNote">
+                @click="notesStore.createNote()">
                 <span class="text-lg">＋</span>
                 New
             </button>
@@ -72,7 +72,7 @@
             <button v-for="note in filteredNotes" :key="note.id"
                 class="w-full text-left transition px-3 py-3 md:rounded-xl md:border md:border-white/10 md:bg-white/5 hover:bg-white/10"
                 :class="{ 'border-emerald-400/70 bg-white/10': note.id === notesStore.selectedNoteId }"
-                @click="selectNote(note.id)">
+                @click="notesStore.select(note.id)">
                 <div class="flex items-center justify-between gap-2">
                     <p class="text-sm font-semibold">{{ note.title || 'Untitled' }}</p>
                     <svg v-if="note.pinned" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" :class="note.pinned ? 'text-emerald-400' : 'text-slate-400'" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" ><path d="m640-480 80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280Zm-286 80h252l-46-46v-314H400v314l-46 46Zm126 0Z"/></svg>  
@@ -150,14 +150,4 @@ const preview = (note: any) => {
     return raw.length ? raw : "Empty note";
 };
 
-const selectNote = (id: string) => {
-    notesStore.select(id);
-    const next = notesStore.notes.find((note) => note.id === id);
-    uiStore.setEditingContent(next ? next.content.trim().length === 0 : true);
-};
-
-const createNote = () => {
-    notesStore.createNote();
-    uiStore.setEditingContent(true);
-};
 </script>

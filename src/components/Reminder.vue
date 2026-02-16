@@ -175,38 +175,72 @@
 
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { computed, watch, onMounted } from "vue";
 import { useRemindersStore } from "../stores/useReminders";
 import { useNotesStore } from "../stores/useNotes";
 
 const remindersStore = useRemindersStore();
 const notesStore = useNotesStore();
 
-const repeatOptions = [
-    { value: "none", label: "None" },
-    { value: "daily", label: "Daily" },
-    { value: "weekly", label: "Weekly" },
-    { value: "monthly", label: "Monthly" },
-];
+/* ─────────────── derived state ─────────────── */
 
 const activeReminders = computed(
-    () => notesStore.getActiveNote()?.reminders ?? [],
+  () => notesStore.getActiveNote()?.reminders ?? [],
 );
 
-const selectedId = computed({
-    get: () =>
-        remindersStore.selectedReminderId ??
-        activeReminders.value[0]?.id,
-    set: v => remindersStore.openSheet(v),
+/**
+ * IMPORTANT:
+ * This computed is the bridge between <select v-model>
+ * and remindersStore.openSheet()
+ */
+const selectedReminderId = computed({
+  get() {
+    return (
+      remindersStore.selectedReminderId ??
+      activeReminders.value[0]?.id ??
+      "new"
+    );
+  },
+  set(id: string) {
+    remindersStore.openSheet(id);
+  },
 });
 
-onMounted(() => {
-    remindersStore.requestPermission();
-});
+/* ─────────────── helpers ─────────────── */
+
+const formatReminderShort = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const repeatOptions = [
+  { value: "none", label: "None" },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+];
+
+/* ─────────────── actions ─────────────── */
+
+const saveReminder = () => remindersStore.saveReminder();
+const removeReminder = () => remindersStore.removeReminder();
+const markDone = () => remindersStore.markDone();
+
+/* ─────────────── effects ─────────────── */
 
 watch(
-    () => [remindersStore.reminderForm.date, remindersStore.reminderForm.time],
-    remindersStore.enforceReminderMin,
-    { immediate: true },
+  () => [
+    remindersStore.reminderForm.date,
+    remindersStore.reminderForm.time,
+  ],
+  remindersStore.enforceReminderMin,
+  { immediate: true },
 );
+
+onMounted(() => {
+  remindersStore.requestPermission();
+});
 </script>
+

@@ -1,78 +1,131 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { readSettingsSnapshot, writeSettingsSnapshot } from "../lib/db";
 
 export const useUiStore = defineStore("ui", () => {
-  // search & filters
-  const searchTerm = ref("");
-  const tagFilter = ref<string | null>(null);
-  const tagInput = ref("");
+    // search & filters
+    const searchTerm = ref("");
+    const tagFilter = ref<string | null>(null);
+    const tagInput = ref("");
 
-  // editing state
-  const isEditing = ref(false);
-  const editingContent = ref(false);
+    // editing state
+    const isEditing = ref(false);
+    const editingContent = ref(false);
+    const isInfoOpen = ref(false);
 
-  // UI modes
-  const focusMode = ref(false);
-  const isSettingsOpen = ref(false);
-  const isInitialSetup = ref(false);
+    // UI modes
+    const focusMode = ref(false);
+    const isSettingsOpen = ref(false);
+    const isInitialSetup = ref(false);
 
-  // --- actions ---
-  const setSearchTerm = (value: string) => {
-    searchTerm.value = value;
-  };
+    const toggleInfo = (action?: "open" | "close") => {
+        if (action === "open") {
+            isInfoOpen.value = true;
+        } else if (action === "close") {
+            isInfoOpen.value = false;
+        } else {
+            isInfoOpen.value = !isInfoOpen.value;
+        }
+    };
 
-  const setTagFilter = (value: string | null) => {
-    tagFilter.value = value;
-  };
+    // persistence helpers
+    const persistSettings = async () => {
+        await writeSettingsSnapshot({
+            isInitialSetup: isInitialSetup.value,
+            focusMode: focusMode.value,
+            isSettingsOpen: isSettingsOpen.value,
+        });
+    };
 
-  const setTagInput = (value: string) => {
-    tagInput.value = value;
-  };
+    const toggleInitialSetup = (value: boolean) => {
+        isInitialSetup.value = value;
+    }
 
-  const startEditing = () => {
-    isEditing.value = true;
-  };
+    const hydrateSettings = async () => {
+        const snapshot = await readSettingsSnapshot();
+        if (!snapshot) return;
+        if (typeof snapshot.isInitialSetup === "boolean") isInitialSetup.value = snapshot.isInitialSetup;
+        if (typeof snapshot.focusMode === "boolean") focusMode.value = snapshot.focusMode;
+        if (typeof snapshot.isSettingsOpen === "boolean") isSettingsOpen.value = snapshot.isSettingsOpen;
+    };
 
-  const stopEditing = () => {
-    isEditing.value = false;
-  };
+    void hydrateSettings();
 
-  const setEditingContent = (value: boolean) => {
-    editingContent.value = value;
-  };
+    watch(
+        () => ({ isInitialSetup: isInitialSetup.value, focusMode: focusMode.value, isSettingsOpen: isSettingsOpen.value }),
+        () => { void persistSettings(); },
+    );
 
-  const toggleFocusMode = () => {
-    focusMode.value = !focusMode.value;
-  };
+    // --- actions ---
+    const setSearchTerm = (value: string) => {
+        searchTerm.value = value;
+        toggleInfo("close");
+    };
 
-  const openSettings = () => {
-    isSettingsOpen.value = true;
-  };
+    const setTagFilter = (value: string | null) => {
+        tagFilter.value = value;
+        toggleInfo("close");
+    };
 
-  const closeSettings = () => {
-    isSettingsOpen.value = false;
-  };
+    const setTagInput = (value: string) => {
+        tagInput.value = value;
+        toggleInfo("close");
+    };
 
-  return {
-    // state
-    searchTerm,
-    tagFilter,
-    tagInput,
-    isEditing,
-    editingContent,
-    focusMode,
-    isSettingsOpen,
-    isInitialSetup,
+    const startEditing = () => {
+        isEditing.value = true;
+        toggleInfo("close");
+    };
 
-    // actions
-    setSearchTerm,
-    setTagFilter,
-    setTagInput,
-    startEditing,
-    stopEditing,
-    setEditingContent,
-    toggleFocusMode,
-    openSettings,
-    closeSettings,
-  };
+    const stopEditing = () => {
+        isEditing.value = false;
+        toggleInfo("close");
+    };
+
+    const setEditingContent = (value: boolean) => {
+        editingContent.value = value;
+        toggleInfo("close");
+    };
+
+    const toggleFocusMode = () => {
+        focusMode.value = !focusMode.value;
+        toggleInfo("close");
+    };
+
+    const openSettings = () => {
+        isSettingsOpen.value = true;
+        toggleInfo("close");
+    };
+
+    const closeSettings = () => {
+        isSettingsOpen.value = false;
+    };
+
+    return {
+        // state
+        searchTerm,
+        tagFilter,
+        tagInput,
+        isEditing,
+        editingContent,
+        focusMode,
+        isSettingsOpen,
+        isInitialSetup,
+        isInfoOpen,
+
+        // actions
+        toggleInitialSetup,
+        setSearchTerm,
+        setTagFilter,
+        setTagInput,
+        startEditing,
+        stopEditing,
+        setEditingContent,
+        toggleFocusMode,
+        openSettings,
+        closeSettings,
+        toggleInfo,
+    };
+}, {
+    persist: false,
 });

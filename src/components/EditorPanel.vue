@@ -44,7 +44,7 @@
                     </svg>
 
                     <!-- Note Info button -->
-                    <svg @click="toggleInfo('open')" class="w-5 h-5 cursor-pointer text-gray-800 dark:text-white"
+                    <svg @click="uiStore.toggleInfo()" class="w-5 h-5 cursor-pointer text-gray-800 dark:text-white"
                         aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -52,7 +52,7 @@
                     </svg>
 
                     <!-- Note info -->
-                    <div v-if="infoOpen" class=" overflow-y-auto absolute top-0 right-0 w-42">
+                    <div v-if="uiStore.isInfoOpen" class=" overflow-y-auto absolute top-0 right-0 w-42">
                         <div class="relative bg-slate-800 border border-slate-700 rounded-md shadow-sm p-2">
                             <!-- Modal header -->
                             <div class="flex items-center justify-between border-b border-default">
@@ -60,7 +60,7 @@
                                     Info
                                 </span>
                                
-                                <svg @click="toggleInfo('close')" class="w-4 h-4 cursor-pointer" aria-hidden="true"
+                                <svg @click="uiStore.toggleInfo()" class="w-4 h-4 cursor-pointer" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                     viewBox="0 0 24 24">
                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -176,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useNotesStore, getReminderState } from "../stores/useNotes";
 import { useUiStore } from "../stores/useUi";
 import { useRemindersStore } from "../stores/useReminders";
@@ -185,16 +185,6 @@ import editor from "./editor.vue";
 const notesStore = useNotesStore();
 const uiStore = useUiStore();
 const remindersStore = useRemindersStore();
-const infoOpen = ref(false);
-
-const toggleInfo = (mode: 'open' | 'close') => {
-    if (mode === 'open') {
-        infoOpen.value = true;
-    } else {
-        infoOpen.value = false;
-    }
-};
-
 const editorSurfaceRef = ref<HTMLDivElement | null>(null);
 const shouldFocusEditor = ref(false);
 
@@ -260,11 +250,11 @@ const syncSurfaceHtml = () => {
     el.innerHTML = normalizeHtml(activeNote.value?.content ?? "");
 };
 
-const syncFromSurface = () => {
-    const el = editorSurfaceRef.value;
-    if (!el) return;
-    notesStore.updateContent(el.innerHTML);
-};
+// const syncFromSurface = () => {
+//     const el = editorSurfaceRef.value;
+//     if (!el) return;
+//     notesStore.updateContent(el.innerHTML);
+// };
 
 onMounted(() => {
     syncSurfaceHtml();
@@ -297,7 +287,7 @@ const enterEditMode = () => {
     uiStore.setEditingContent(true);
 };
 
-const exitEditMode = () => {
+const exitEditMode = async () => {
     if (!activeNote.value) return;
     if (activeNote.value.content.trim().length === 0) {
         notesStore.pruneEmptyActive();
@@ -305,20 +295,22 @@ const exitEditMode = () => {
     } else {
         uiStore.setEditingContent(false);
     }
+    await notesStore.persist();
 };
 
 const toggleEdit = () => {
     if (uiStore.editingContent) {
-        exitEditMode();
+        void exitEditMode();
     } else {
         enterEditMode();
     }
 };
 
-const exitEditing = () => {
+const exitEditing = async () => {
     notesStore.pruneEmptyActive();
     uiStore.stopEditing();
     uiStore.setEditingContent(false);
+    await notesStore.persist();
 };
 
 const addTag = () => {
@@ -344,6 +336,7 @@ watch(
 
 const deleteNote = async (id: string) => {
     await notesStore.deleteNote(id);
+    await notesStore.persist();
     uiStore.stopEditing();
     uiStore.setEditingContent(false);
 };

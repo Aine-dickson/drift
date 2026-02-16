@@ -37,14 +37,6 @@ import Reminder from "./components/Reminder.vue";
 const notesStore = useNotesStore();
 const uiStore = useUiStore();
 const remindersStore = useRemindersStore();
-watch(
-    () => ({ notes: notesStore.notes, selected: notesStore.selectedNoteId }),
-    () => {
-        void notesStore.persist();
-        void remindersStore.scheduleAll();
-    },
-    { deep: true },
-);
 
 const stopAlarm = ref<(() => void) | null>(null);
 const reminderUnlisten = ref<(() => void) | null>(null);
@@ -116,20 +108,25 @@ const focusHotkeyHandler = (event: KeyboardEvent) => {
 	}
 };
 
-onMounted(() => {
-		void notesStore.init().then(() => {
-			if (!notesStore.selectedNoteId && notesStore.notes[0]) {
-				notesStore.select(notesStore.notes[0].id);
-			}
-			void notesStore.persist();
-		});
+
+onMounted(async () => {
+	await notesStore.init();
+
+	if (!notesStore.selectedNoteId && notesStore.notes[0]) {
+		notesStore.select(notesStore.notes[0].id);
+	}
+
+	await notesStore.persist();
+
+	await remindersStore.requestPermission();
+	if (remindersStore.notificationReady) {
+		await remindersStore.rehydrateAll();
+	}
+
 	window.addEventListener("keydown", focusHotkeyHandler);
-	// Play an alarm when the backend emits a reminder_fired event
-	listen("reminder_fired", () => {
-		playAlarm();
-	}).then((unlisten) => {
-		reminderUnlisten.value = unlisten;
-	});
+
+	const unlisten = await listen("reminder_fired", playAlarm);
+	reminderUnlisten.value = unlisten;
 
 	ensureAutostart();
 });

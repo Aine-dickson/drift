@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { invoke } from "@tauri-apps/api/core";
-import { readNotesSnapshot, writeNotesSnapshot, type NotesSnapshot } from "../lib/db";
 import { ref } from "vue";
+import { readNotesSnapshot, writeNotesSnapshot, type NotesSnapshot } from "../lib/db";
 import { useUiStore } from "./useUi";
 
 export type Reminder = {
@@ -71,11 +71,11 @@ const seedNotes = (): Note[] => [
 ];
 
 export const useNotesStore = defineStore("notes", () => {
-    const uiStore = useUiStore()
-    const notes = ref(uiStore.isInitialSetup ? seedNotes() : [])
+    const uiStore = useUiStore();
+    const notes = ref(uiStore.isInitialSetup.value ? seedNotes() : []);
     const selectedNoteId = ref<string>("")
     const initialized = ref(false)
-    const unsyncedCount = ref(0)
+    // const unsyncedCount = ref(0)
     const unTitleCount = ref(0);
 
 
@@ -92,9 +92,11 @@ export const useNotesStore = defineStore("notes", () => {
         if (snapshot && Array.isArray((snapshot as NotesSnapshot).notes)) {
             notes.value = snapshot.notes as Note[];
             selectedNoteId.value = snapshot.selectedNoteId ?? (notes.value[0]?.id ?? null);
+            uiStore.toggleInitialSetup(false);
         } else {
             notes.value = seedNotes();
             selectedNoteId.value = notes.value[0]?.id ?? null;
+            uiStore.toggleInitialSetup(true);
             await persist();
         }
         initialized.value = true;
@@ -105,16 +107,22 @@ export const useNotesStore = defineStore("notes", () => {
         await writeNotesSnapshot(payload);
     }
 
-    const select = (id: string) => {
+    const select = async (id: string) => {
+        await persist();
+        uiStore.setEditingContent(false);
         selectedNoteId.value = id;
+        uiStore.toggleInfo('close')
     }
 
-    const createNote = () => {
+    const createNote = async () => {
+        await persist();
+        uiStore.setEditingContent(false);
         const noteName = `Untitled note ${unTitleCount.value + 1}`;
         unTitleCount.value += 1;
         const note = seedNote(noteName, "", []);
         notes.value.unshift(note);
         selectedNoteId.value = note.id;
+        uiStore.toggleInfo('close')
         return note;
     }
 
@@ -184,20 +192,13 @@ export const useNotesStore = defineStore("notes", () => {
     }
 
     return{
-        notes,
-        selectedNoteId,
-        init,
-        persist,
-        select,
-        createNote,
-        updateActive,
-        updateTitle,
-        updateContent,
-        togglePin,
-        addTag,
-        removeTag,
-        deleteNote,
-        pruneEmptyActive,
+        notes, selectedNoteId, unTitleCount, initialized,
+        init, persist, select, createNote,
+        updateActive, updateTitle, updateContent, togglePin,
+        addTag, removeTag, deleteNote, pruneEmptyActive,
         getActiveNote
     }
-});
+}, {
+    persist: false,
+}
+);

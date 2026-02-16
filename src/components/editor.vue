@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef, watch } from "vue";
+import { onMounted, useTemplateRef, watch } from "vue";
 
 const props = defineProps<{
     modelValue: string;
