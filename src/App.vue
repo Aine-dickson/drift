@@ -43,7 +43,6 @@ import { useNotesStore } from "./stores/useNotes";
 import { useUiStore } from "./stores/useUi";
 import { useRemindersStore } from "./stores/useReminders";
 import SettingsPanel from "./components/SettingsPanel.vue";
-import SettingsSheet from "./components/SettingsSheet.vue";
 import AlarmBanner from "./components/AlarmBanner.vue";
 import SidebarPanel from "./components/SidebarPanel.vue";
 import EditorPanel from "./components/EditorPanel.vue";
