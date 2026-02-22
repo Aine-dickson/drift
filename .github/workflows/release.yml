@@ -93,6 +93,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Init Android project (if missing)
+        run: bun run tauri android init --force
+
       - name: Build Android (tauri)
         run: bun run tauri android build
 
