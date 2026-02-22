@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "drift",
+        "title": "Drift",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "label": "main",
+        "backgroundColor": "#0f172a",
+        "transparent": false
       }
     ],
     "security": {

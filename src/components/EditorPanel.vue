@@ -1,18 +1,16 @@
 <template>
     <main
-        class="flex min-w-0 flex-1 flex-col w-full rounded-none border border-white/10 bg-white/5 p-4 backdrop-blur md:rounded-2xl md:p-6"
-        :class="{ 'hidden md:flex': !uiStore.isEditing }">
-        <div v-if="activeNote" class="mb-3 w-full flex items-center gap-2 text-xs text-slate-400 md:hidden">
-            <button
-                class="rounded-full border border-white/10 px-3 py-1 text-slate-100 transition hover:border-emerald-400 hover:text-emerald-200"
-                @click="exitEditing">
-                Back
-            </button>
-            <span class="truncate">{{ activeNote.title || 'Untitled' }}</span>
-        </div>
-
+        class="flex min-w-0 flex-1 flex-col w-full h-full rounded-none border border-white/10 bg-white/5 p-4 backdrop-blur md:rounded-2xl md:p-6"
+        >
         <div v-if="activeNote" class="flex h-full flex-col w-full">
             <div class="flex flex-wrap items-center gap-2 text-xs">
+                <button v-if="uiStore.isSmall"
+                    class="py-1 text-slate-100 transition cursor-pointer hover:text-emerald-200"
+                    @click="exitEditing">
+                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+                    </svg>
+                </button>
                 <button
                     class="rounded-full border border-white/10 px-3 py-1 text-slate-100 transition hover:border-emerald-400 hover:text-emerald-200"
                     @click="uiStore.toggleFocusMode">
@@ -119,7 +117,7 @@
                             reminderState?.dueSoon ? 'border-amber-300/80 text-amber-200' : '',
                             reminderState?.done ? 'border-emerald-400/70 text-emerald-200' : '',
                             !reminderState ? 'border-white/10 text-slate-300' : 'border-white/10'
-                        ]" @click="remindersStore.openSheet()">
+                        ]" @click="openReminder">
                         ⏰
                         <span v-if="reminderState">
                             {{ reminderState.label }}
@@ -158,7 +156,7 @@
                 </div>
 
                 <div v-else
-                    class="h-full thin-scroll w-full rounded-2xl border border-white/10 bg-slate-950/20 p-4 text-sm leading-6 text-slate-100">
+                    class="h-full thin-scroll w-full overflow-y-auto rounded-2xl border border-white/10 bg-slate-950/20 p-4 text-sm leading-6 text-slate-100">
                     <p v-if="(activeNote.content || '').trim().length === 0" class="text-slate-500">Empty note.
                         Click Edit to
                         add content.
@@ -175,7 +173,7 @@
     </main>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" vapor>
 import { computed, onMounted, ref, watch } from "vue";
 import { useNotesStore, getReminderState } from "../stores/useNotes";
 import { useUiStore } from "../stores/useUi";
@@ -190,6 +188,16 @@ const shouldFocusEditor = ref(false);
 
 const activeNote = computed(() => notesStore.getActiveNote());
 const reminderState = computed(() => (activeNote.value ? getReminderState(activeNote.value) : null));
+
+const openReminder = () => {
+    if (!activeNote.value) return;
+    if(uiStore.isSmall) {
+        uiStore.setView('reminder');
+    } else {
+        remindersStore.openSheet(activeNote.value.id);
+    } 
+}
+
 const formatDate = (timestamp: string) => {
     const target = new Date(timestamp);
     const now = new Date();
@@ -311,6 +319,7 @@ const exitEditing = async () => {
     uiStore.stopEditing();
     uiStore.setEditingContent(false);
     await notesStore.persist();
+    uiStore.setView('sidebar')
 };
 
 const addTag = () => {

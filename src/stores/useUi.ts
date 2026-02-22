@@ -5,8 +5,11 @@ import { readSettingsSnapshot, writeSettingsSnapshot } from "../lib/db";
 export const useUiStore = defineStore("ui", () => {
     // search & filters
     const searchTerm = ref("");
-    const tagFilter = ref<string | null>(null);
+    const tagFilter = ref<string[]>([]);
     const tagInput = ref("");
+    const activeView = ref<"sidebar" | "editor" | "settings" | "reminder">("sidebar");
+    const isSmall = ref(false);
+    const isMedium = ref(false);
 
     // editing state
     const isEditing = ref(false);
@@ -62,9 +65,17 @@ export const useUiStore = defineStore("ui", () => {
         toggleInfo("close");
     };
 
-    const setTagFilter = (value: string | null) => {
-        tagFilter.value = value;
+    const setTagFilter = (value?: string) => {
         toggleInfo("close");
+        if(!value) {
+            tagFilter.value = [];
+            return;
+        }
+        if(tagFilter.value.includes(value)) {
+            tagFilter.value = tagFilter.value.filter(tag => tag !== value);
+        } else {
+            tagFilter.value = [...tagFilter.value, value];
+        }
     };
 
     const setTagInput = (value: string) => {
@@ -94,11 +105,52 @@ export const useUiStore = defineStore("ui", () => {
 
     const openSettings = () => {
         isSettingsOpen.value = true;
+        activeView.value = 'settings'
         toggleInfo("close");
     };
 
     const closeSettings = () => {
         isSettingsOpen.value = false;
+    };
+
+    const setView = (view: "sidebar" | "editor" | "settings" | "reminder") => {
+        activeView.value = view;
+    }
+
+    const bindViewport = () => {
+        if (typeof window === "undefined") return () => {};
+
+        // Tailwind breakpoints: md >= 768, lg >= 1024
+        const mqlSmall = window.matchMedia("(max-width: 767px)");
+        const mqlLarge = window.matchMedia("(min-width: 1024px)");
+
+        const update = () => {
+            isSmall.value = mqlSmall.matches;
+            isMedium.value = !mqlSmall.matches && !mqlLarge.matches;
+        };
+
+        update();
+
+        const handler = () => update();
+        if ("addEventListener" in mqlSmall) {
+            mqlSmall.addEventListener("change", handler);
+            mqlLarge.addEventListener("change", handler);
+        } else {
+            mqlSmall.addListener(handler);
+            mqlLarge.addListener(handler);
+            window.addEventListener("resize", handler);
+        }
+
+        return () => {
+            if ("removeEventListener" in mqlSmall) {
+                mqlSmall.removeEventListener("change", handler);
+                mqlLarge.removeEventListener("change", handler);
+            } else {
+                mqlSmall.removeListener(handler);
+                mqlLarge.removeListener(handler);
+                window.removeEventListener("resize", handler);
+            }
+        };
     };
 
     return {
@@ -112,6 +164,9 @@ export const useUiStore = defineStore("ui", () => {
         isSettingsOpen,
         isInitialSetup,
         isInfoOpen,
+        activeView,
+        isSmall,
+        isMedium,
 
         // actions
         toggleInitialSetup,
@@ -125,7 +180,9 @@ export const useUiStore = defineStore("ui", () => {
         openSettings,
         closeSettings,
         toggleInfo,
+        bindViewport,
+        setView
     };
 }, {
-    persist: false,
+    persist: true,
 });

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" vapor>
 import { onMounted, useTemplateRef, watch } from "vue";
 
 const props = defineProps<{
@@ -228,43 +228,43 @@ onMounted(() => {
 <template>
     <div class="flex flex-col h-full w-full">
         <!-- toolbar -->
-        <div class="flex flex-wrap space-x-2 text-xs px-2 py-1 items-center bg-slate-800">
-            <button @click="wrap('strong')" class="cursor-pointer">
-                <svg class="w-5 h-5 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+        <div class="flex flex-wrap space-x-2 text-xs mx-1 mt-1 rounded-3xl px-2 items-center bg-slate-800">
+            <button @click="wrap('strong')" class="cursor-pointer hover:bg-slate-700 rounded-md">
+                <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     width="24" height="24" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M8 5h4.5a3.5 3.5 0 1 1 0 7H8m0-7v7m0-7H6m2 7h6.5a3.5 3.5 0 1 1 0 7H8m0-7v7m0 0H6" />
                 </svg>
             </button>
-            <button @click="wrap('em')" class="cursor-pointer">
-                <svg class="w-5 h-5 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+            <button @click="wrap('em')" class="cursor-pointer hover:bg-slate-700 rounded-md">
+                <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     width="24" height="24" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="m8.874 19 6.143-14M6 19h6.33m-.66-14H18" />
                 </svg>
             </button>
-            <button @click="wrap('u')" class="cursor-pointer">
-                <svg class="w-5 h-5 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+            <button @click="wrap('u')" class="cursor-pointer hover:bg-slate-700 rounded-md">
+                <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     width="24" height="24" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
                         d="M6 19h12M8 5v9a4 4 0 0 0 8 0V5M6 5h4m4 0h4" />
                 </svg>
             </button>
 
-            <button @click="heading(1)" class="text-[1rem] cursor-pointer">H1</button>
-            <button @click="heading(2)" class="text-[1rem] cursor-pointer">H2</button>
-            <button @click="heading(3)" class="text-[1rem] cursor-pointer">H3</button>
+            <button @click="heading(1)" class="text-[1rem] cursor-pointer hover:bg-slate-700 rounded-md">H1</button>
+            <button @click="heading(2)" class="text-[1rem] cursor-pointer hover:bg-slate-700 rounded-md">H2</button>
+            <button @click="heading(3)" class="text-[1rem] cursor-pointer hover:bg-slate-700 rounded-md">H3</button>
 
-            <button @click="list('ul')" class="cursor-pointer">
-                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
+            <button @click="list('ul')" class="cursor-pointer hover:bg-slate-700 rounded-md">
+                <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
                         d="M9 8h10M9 12h10M9 16h10M4.99 8H5m-.02 4h.01m0 4H5" />
                 </svg>
             </button>
 
-            <button @click="list('ol')" class="cursor-pointer">
-                <svg class="w-6 h-5 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+            <button @click="list('ol')" class="cursor-pointer hover:bg-slate-700 rounded-md">
+                <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     width="24" height="24" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 6h8m-8 6h8m-8 6h8M4 16a2 2 0 1 1 3.321 1.5L4 20h5M4 5l2-1v6m-2 0h4" />
@@ -274,7 +274,7 @@ onMounted(() => {
 
         <!-- surface -->
         <div ref="editor" contenteditable
-            class="flex-1 w-full min-w-0 p-2 overflow-hidden rounded-xl outline-none overflow-y-auto wrap-break-word whitespace-pre-wrap"
+            class="flex-1 w-full min-w-0 p-2 overflow-hidden rounded-xl outline-none overflow-y-auto thin-scroll wrap-break-word whitespace-pre-wrap"
             @input="sync" />
     </div>
 </template>

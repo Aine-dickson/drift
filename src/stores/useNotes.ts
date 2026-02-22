@@ -72,7 +72,7 @@ const seedNotes = (): Note[] => [
 
 export const useNotesStore = defineStore("notes", () => {
     const uiStore = useUiStore();
-    const notes = ref(uiStore.isInitialSetup.value ? seedNotes() : []);
+    const notes = ref(uiStore.isInitialSetup ? seedNotes() : []);
     const selectedNoteId = ref<string>("")
     const initialized = ref(false)
     // const unsyncedCount = ref(0)
@@ -112,6 +112,7 @@ export const useNotesStore = defineStore("notes", () => {
         uiStore.setEditingContent(false);
         selectedNoteId.value = id;
         uiStore.toggleInfo('close')
+        uiStore.setView('editor')
     }
 
     const createNote = async () => {
@@ -123,6 +124,7 @@ export const useNotesStore = defineStore("notes", () => {
         notes.value.unshift(note);
         selectedNoteId.value = note.id;
         uiStore.toggleInfo('close')
+        uiStore.setView('editor')
         return note;
     }
 
