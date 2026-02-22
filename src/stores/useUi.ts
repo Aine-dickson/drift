@@ -132,22 +132,20 @@ export const useUiStore = defineStore("ui", () => {
         update();
 
         const handler = () => update();
-        if ("addEventListener" in mqlSmall) {
+        const hasAddEvent = typeof mqlSmall.addEventListener === "function" && typeof mqlLarge.addEventListener === "function";
+
+        if (hasAddEvent) {
             mqlSmall.addEventListener("change", handler);
             mqlLarge.addEventListener("change", handler);
         } else {
-            mqlSmall.addListener(handler);
-            mqlLarge.addListener(handler);
             window.addEventListener("resize", handler);
         }
 
         return () => {
-            if ("removeEventListener" in mqlSmall) {
+            if (hasAddEvent) {
                 mqlSmall.removeEventListener("change", handler);
                 mqlLarge.removeEventListener("change", handler);
             } else {
-                mqlSmall.removeListener(handler);
-                mqlLarge.removeListener(handler);
                 window.removeEventListener("resize", handler);
             }
         };
